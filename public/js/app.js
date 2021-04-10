@@ -1858,28 +1858,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
     dataTable: _DataTable__WEBPACK_IMPORTED_MODULE_0__.default
-  },
-  props: ['user'],
-  data: function data() {
-    return {
-      contacts: []
-    };
-  },
-  methods: {
-    getContact: function getContact() {// axios.get('api/home/'+this.user.id)
-      // .then(response => {
-      //     this.contacts = response.data
-      //     console.log(this.contacts)
-      // })
-      // .catch(error => {
-      // });
-    },
-    updateParent: function updateParent() {
-      this.getContact();
-    }
-  },
-  created: function created() {
-    this.getContact();
   }
 });
 
@@ -2145,7 +2123,6 @@ __webpack_require__.r(__webpack_exports__);
       headers: [{
         text: 'Item Code',
         align: 'start',
-        sortable: false,
         value: 'item_code'
       }, {
         text: 'Item Description',
@@ -38401,7 +38378,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("v-app", [
+  return _c("v-app", { staticClass: "bg-secondary" }, [
     _c("div", { staticClass: "container" }, [_c("data-table")], 1)
   ])
 }
@@ -38429,7 +38406,7 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("v-data-table", {
-    staticClass: "elevation-1",
+    staticClass: "elevation-5",
     attrs: { headers: _vm.headers, items: _vm.items, "sort-by": "calories" },
     scopedSlots: _vm._u([
       {

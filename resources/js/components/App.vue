@@ -1,5 +1,5 @@
 <template>
-    <v-app>
+    <v-app class="bg-secondary">
         <div class="container">
             <data-table></data-table>
         </div>
@@ -13,28 +13,5 @@
         components: {
             dataTable
         },
-        props: ['user'],
-        data : function () {
-            return {
-                contacts: []
-            }
-        },
-        methods: {
-            getContact() {
-                // axios.get('api/home/'+this.user.id)
-                // .then(response => {
-                //     this.contacts = response.data
-                //     console.log(this.contacts)
-                // })
-                // .catch(error => {
-                // });
-            },
-            updateParent() {
-                this.getContact()
-            }
-        },
-        created() {
-            this.getContact()
-        }
     }
 </script>

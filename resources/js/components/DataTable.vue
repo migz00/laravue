@@ -3,7 +3,7 @@
     :headers="headers"
     :items="items"
     sort-by="calories"
-    class="elevation-1"
+    class="elevation-5"
   >
     <template v-slot:top>
       <v-toolbar
@@ -248,7 +248,6 @@
         {
           text: 'Item Code',
           align: 'start',
-          sortable: false,
           value: 'item_code',
         },
         { text: 'Item Description', value: 'item_desc' },
