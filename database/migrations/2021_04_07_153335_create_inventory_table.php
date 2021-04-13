@@ -13,17 +13,17 @@ class CreateInventoryTable extends Migration
      */
     public function up()
     {
-        Schema::create('inventory', function (Blueprint $table) {
+        Schema::create('inventories', function (Blueprint $table) {
             $table->id();
-            $table->integer('item_code')->unsigned()->unique();
+            $table->string('item_code', 50)->unique();
             $table->string('item_desc', 255);
             $table->integer('qty')->unsigned();
             $table->string('unit_of_measure');
             $table->integer('type');
-            $table->double('price', 7, 4);
-            $table->string('location', 255);
-            $table->string('serial');
-            $table->string('model');
+            $table->decimal('price', 11, 2)->nullable();
+            $table->string('location', 255)->nullable();
+            $table->string('serial')->nullable();
+            $table->string('model')->nullable();
             $table->timestamps();
         });
     }

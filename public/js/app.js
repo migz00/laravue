@@ -2110,10 +2110,23 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
     return {
       check_val: 0,
+      ic_err: '',
       s_err: '',
       m_err: '',
       valid: true,
@@ -2187,8 +2200,14 @@ __webpack_require__.r(__webpack_exports__);
         serial: '',
         model: ''
       },
-      ic_rules: [function (v) {
-        return !!v || 'Item Code is required';
+      id_rules: [function (v) {
+        return !!v || 'Item Description is required';
+      }],
+      q_rules: [function (v) {
+        return !!v || 'Quantity is required';
+      }],
+      uom_rules: [function (v) {
+        return !!v || 'Unit of Measure is required';
       }]
     };
   },
@@ -2206,10 +2225,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     'editedItem.type': function editedItemType(val) {
       if (val == '0') {
-        this.editedItem.serial = '';
-        this.editedItem.model = '';
-        this.s_err = '';
-        this.m_err = '';
+        this.initErr();
       } else {
         if (this.editedItem.serial.length === 0) {
           this.s_err = "Serial is required";
@@ -2224,14 +2240,32 @@ __webpack_require__.r(__webpack_exports__);
       if (val) {
         this.s_err = '';
       } else {
-        this.s_err = "Serial is required";
+        if (this['editedItem.type'] == '1') {
+          this.s_err = "Serial is required";
+        }
       }
     },
     'editedItem.model': function editedItemModel(val) {
       if (val) {
         this.m_err = '';
       } else {
-        this.m_err = "Model is required";
+        if (this['editedItem.type'] == '1') {
+          this.m_err = "Model is required";
+        }
+      }
+    },
+    'editedItem.item_code': function editedItemItem_code(val) {
+      var _this = this;
+
+      if (val) {
+        this.ic_err = '';
+        this.items.forEach(function (element) {
+          if (val == element.item_code) {
+            _this.ic_err = 'Item Code already Exists';
+          }
+        });
+      } else {
+        this.ic_err = 'Item Code is required';
       }
     }
   },
@@ -2240,12 +2274,18 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     initialize: function initialize() {
-      var _this = this;
+      var _this2 = this;
 
       axios.get('api/home').then(function (response) {
         console.log(response.data);
-        _this.items = response.data;
+        _this2.items = response.data;
       })["catch"](function (error) {});
+    },
+    initErr: function initErr() {
+      this.editedItem.serial = '';
+      this.editedItem.model = '';
+      this.s_err = '';
+      this.m_err = '';
     },
     editItem: function editItem(item) {
       console.log(item);
@@ -2260,18 +2300,18 @@ __webpack_require__.r(__webpack_exports__);
       this.dialogDelete = true;
     },
     deleteItemConfirm: function deleteItemConfirm() {
-      var _this2 = this;
+      var _this3 = this;
 
       axios["delete"]('api/home/destroy/' + this.editedItem.id).then(function (response) {
         if (response.status == 200) {
           console.log('Success');
 
-          _this2.$nextTick(function () {
-            _this2.editedItem = Object.assign({}, _this2.defaultItem);
-            _this2.editedIndex = -1;
+          _this3.$nextTick(function () {
+            _this3.editedItem = Object.assign({}, _this3.defaultItem);
+            _this3.editedIndex = -1;
           });
 
-          _this2.initialize();
+          _this3.initialize();
         } else {
           console.log('Failed');
         }
@@ -2279,64 +2319,68 @@ __webpack_require__.r(__webpack_exports__);
       this.closeDelete();
     },
     close: function close() {
-      var _this3 = this;
+      var _this4 = this;
 
       this.dialog = false;
       this.edit = false;
-      this.$nextTick(function () {
-        _this3.editedItem = Object.assign({}, _this3.defaultItem);
-        _this3.editedIndex = -1;
-      });
-    },
-    closeDelete: function closeDelete() {
-      var _this4 = this;
-
-      this.dialogDelete = false;
       this.$nextTick(function () {
         _this4.editedItem = Object.assign({}, _this4.defaultItem);
         _this4.editedIndex = -1;
       });
     },
-    save: function save() {
+    closeDelete: function closeDelete() {
       var _this5 = this;
 
-      if (this.editedIndex > -1) {
-        axios.put('api/home/update', {
-          item: this.editedItem
-        }).then(function (response) {
-          if (response.status == 200) {
-            console.log('Success');
+      this.dialogDelete = false;
+      this.$nextTick(function () {
+        _this5.editedItem = Object.assign({}, _this5.defaultItem);
+        _this5.editedIndex = -1;
+      });
+    },
+    save: function save() {
+      var _this6 = this;
 
-            _this5.$nextTick(function () {
-              _this5.editedItem = Object.assign({}, _this5.defaultItem);
-              _this5.editedIndex = -1;
-            });
+      var check = this.$refs.form.validate();
 
-            _this5.initialize();
-          } else {
-            console.log('Failed');
-          }
-        })["catch"](function (error) {});
-      } else {
-        axios.post('api/home/store', {
-          item: this.editedItem
-        }).then(function (response) {
-          if (response.status == 201) {
-            console.log('Success');
+      if (check) {
+        if (this.editedIndex > -1) {
+          axios.put('api/home/update', {
+            item: this.editedItem
+          }).then(function (response) {
+            if (response.status == 200) {
+              console.log('Success');
 
-            _this5.$nextTick(function () {
-              _this5.editedItem = Object.assign({}, _this5.defaultItem);
-              _this5.editedIndex = -1;
-            });
+              _this6.$nextTick(function () {
+                _this6.editedItem = Object.assign({}, _this6.defaultItem);
+                _this6.editedIndex = -1;
+              });
 
-            _this5.initialize();
-          } else {
-            console.log('Failed');
-          }
-        })["catch"](function (error) {});
+              _this6.initialize();
+            } else {
+              console.log('Failed');
+            }
+          })["catch"](function (error) {});
+        } else {
+          axios.post('api/home/store', {
+            item: this.editedItem
+          }).then(function (response) {
+            if (response.status == 201) {
+              console.log('Success');
+
+              _this6.$nextTick(function () {
+                _this6.editedItem = Object.assign({}, _this6.defaultItem);
+                _this6.editedIndex = -1;
+              });
+
+              _this6.initialize();
+            } else {
+              console.log('Failed');
+            }
+          })["catch"](function (error) {});
+        }
+
+        this.close();
       }
-
-      this.close();
     }
   }
 });
@@ -38512,7 +38556,7 @@ var render = function() {
                                             _c("v-text-field", {
                                               attrs: {
                                                 readonly: _vm.edit === true,
-                                                rules: _vm.ic_rules,
+                                                "error-messages": _vm.ic_err,
                                                 "prepend-icon": "mdi-barcode",
                                                 label: "Item Code"
                                               },
@@ -38546,7 +38590,7 @@ var render = function() {
                                             _c("v-text-field", {
                                               attrs: {
                                                 "prepend-icon": "mdi-tag",
-                                                rules: _vm.ic_rules,
+                                                rules: _vm.id_rules,
                                                 label: "Item Description"
                                               },
                                               model: {
@@ -38579,7 +38623,8 @@ var render = function() {
                                             _c("v-text-field", {
                                               attrs: {
                                                 "prepend-icon": "mdi-pound",
-                                                rules: _vm.ic_rules,
+                                                rules: _vm.q_rules,
+                                                type: "number",
                                                 label: "Quantity"
                                               },
                                               model: {
@@ -38612,7 +38657,7 @@ var render = function() {
                                               attrs: {
                                                 "prepend-icon":
                                                   "mdi-scale-balance",
-                                                rules: _vm.ic_rules,
+                                                rules: _vm.uom_rules,
                                                 label: "Unit of Measure"
                                               },
                                               model: {
@@ -38646,8 +38691,8 @@ var render = function() {
                                           [
                                             _c("v-text-field", {
                                               attrs: {
-                                                "prepend-icon":
-                                                  "mdi-currency-usd",
+                                                "prepend-icon": "mdi-cash",
+                                                type: "number",
                                                 label: "Price"
                                               },
                                               model: {
@@ -38918,7 +38963,11 @@ var render = function() {
                             _c(
                               "v-btn",
                               {
-                                attrs: { color: "blue darken-1", text: "" },
+                                attrs: {
+                                  disabled: !_vm.valid,
+                                  color: "blue darken-1",
+                                  text: ""
+                                },
                                 on: { click: _vm.save }
                               },
                               [_vm._v("\n              Save\n            ")]
@@ -39031,6 +39080,24 @@ var render = function() {
         }
       },
       {
+        key: "item.price",
+        fn: function(ref) {
+          var item = ref.item
+          return [
+            _vm._v(
+              "\n    " +
+                _vm._s(
+                  new Intl.NumberFormat("fil-PH", {
+                    style: "currency",
+                    currency: "PHP"
+                  }).format(item.price)
+                ) +
+                "\n  "
+            )
+          ]
+        }
+      },
+      {
         key: "item.actions",
         fn: function(ref) {
           var item = ref.item
@@ -39038,8 +39105,8 @@ var render = function() {
             _c(
               "v-icon",
               {
-                staticClass: "mr-2",
-                attrs: { small: "" },
+                staticClass: "m-2 text-success",
+                attrs: { medium: "" },
                 on: {
                   click: function($event) {
                     return _vm.editItem(item)
@@ -39052,7 +39119,8 @@ var render = function() {
             _c(
               "v-icon",
               {
-                attrs: { small: "" },
+                staticClass: "m-2 red--text",
+                attrs: { medium: "" },
                 on: {
                   click: function($event) {
                     return _vm.deleteItem(item)

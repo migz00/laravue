@@ -51,7 +51,7 @@
                       >
                         <v-text-field
                           :readonly="edit === true"
-                          :rules="ic_rules"
+                          :error-messages="ic_err"
                           prepend-icon="mdi-barcode"
                           v-model="editedItem.item_code"
                           label="Item Code"
@@ -64,7 +64,7 @@
                       >
                         <v-text-field
                           prepend-icon="mdi-tag"
-                          :rules="ic_rules"
+                          :rules="id_rules"
                           v-model="editedItem.item_desc"
                           label="Item Description"
                         ></v-text-field>
@@ -77,7 +77,8 @@
                         <v-text-field
                           prepend-icon="mdi-pound"
                           v-model="editedItem.qty"
-                          :rules="ic_rules"
+                          :rules="q_rules"
+                          type ="number"
                           label="Quantity"
                         ></v-text-field>
                       </v-col>
@@ -89,7 +90,7 @@
                         <v-text-field
                           prepend-icon="mdi-scale-balance"
                           v-model="editedItem.unit_of_measure"
-                          :rules="ic_rules"
+                          :rules="uom_rules"
                           label="Unit of Measure"
                         ></v-text-field>
                       </v-col>
@@ -99,8 +100,9 @@
                         md="4"
                       >
                         <v-text-field
-                          prepend-icon="mdi-currency-usd"
+                          prepend-icon="mdi-cash"
                           v-model="editedItem.price"
+                          type ="number"
                           label="Price"
                         ></v-text-field>
                       </v-col>
@@ -181,6 +183,7 @@
                 Cancel
               </v-btn>
               <v-btn
+                :disabled="!valid"
                 color="blue darken-1"
                 text
                 @click="save"
@@ -203,26 +206,35 @@
         </v-dialog>
       </v-toolbar>
     </template>
+
     <template v-slot:item.type="{ item }">
       <div v-if="item.type == '0'">Consumable</div>
       <div v-if="item.type == '1'">Non-Consumable</div>
     </template>
+
     <template v-slot:item.created_at="{ item }">
       {{ new Date(item.created_at).toString().substr(0, 23) }}
     </template>
+
     <template v-slot:item.updated_at="{ item }">
       {{ new Date(item.updated_at).toString().substr(0, 23) }}
     </template>
+
+    <template v-slot:item.price="{ item }">
+      {{ new Intl.NumberFormat('fil-PH', {style: 'currency', currency: 'PHP'}).format(item.price) }}
+    </template>
+
     <template v-slot:item.actions="{ item }">
       <v-icon
-        small
-        class="mr-2"
+        medium
+        class="m-2 text-success"
         @click="editItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
+        medium
+        class="m-2 red--text"
         @click="deleteItem(item)"
       >
         mdi-delete
@@ -238,6 +250,7 @@
   export default {
     data: () => ({
       check_val: 0,
+      ic_err: '',
       s_err: '',
       m_err: '',
       valid: true,
@@ -290,8 +303,14 @@
         serial: '',
         model: '',
       },
-      ic_rules: [
-        v => !!v || 'Item Code is required',
+      id_rules: [
+        v => !!v || 'Item Description is required',
+      ],
+      q_rules: [
+        v => !!v || 'Quantity is required',
+      ],
+      uom_rules: [
+        v => !!v || 'Unit of Measure is required',
       ],
     }),
 
@@ -311,10 +330,9 @@
       'editedItem.type' (val) {
 
         if (val == '0') {
-          this.editedItem.serial = ''
-          this.editedItem.model = ''
-          this.s_err = ''
-          this.m_err = ''
+
+          this.initErr()
+          
         } else {
           if (this.editedItem.serial.length === 0) {
             this.s_err = "Serial is required"
@@ -328,16 +346,37 @@
         if (val) {
           this.s_err = ''
         } else {
-          this.s_err = "Serial is required"
+          if (this['editedItem.type'] == '1'){
+            this.s_err = "Serial is required"
+          }
+          
         }
       },
       'editedItem.model' (val) {
         if (val) {
           this.m_err = ''
         } else {
-          this.m_err = "Model is required"
+          if (this['editedItem.type'] == '1'){
+            this.m_err = "Model is required"
+          }
         }
-      }
+      },
+      'editedItem.item_code' (val) {
+
+        if (val) {
+          this.ic_err = ''
+
+          this.items.forEach(element => {
+            if (val == element.item_code) {
+              this.ic_err = 'Item Code already Exists'
+            }
+          });
+
+        } else {
+          this.ic_err = 'Item Code is required'
+        }
+
+      },
     },
 
     created () {
@@ -353,6 +392,15 @@
         })
         .catch(error => {
         });
+      },
+
+      initErr () {
+
+        this.editedItem.serial = ''
+        this.editedItem.model = ''
+
+        this.s_err = ''
+        this.m_err = ''
       },
 
       editItem (item) {
@@ -409,54 +457,55 @@
       },
 
       save () {
-        if (this.editedIndex > -1) {
+        let check = this.$refs.form.validate()
+        if(check){
+          if (this.editedIndex > -1) {
+            axios.put('api/home/update', {
+                      item: this.editedItem
+                  })
+                  .then(response => {
+                      if ( response.status == 200 ){
+                          console.log('Success')
+                          this.$nextTick(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem)
+                            this.editedIndex = -1
+                          })
+                          this.initialize()
+                      } 
+                      else 
+                      {
+                          console.log('Failed')
+                      }
+                  })
+                  .catch(error => {
 
-          axios.put('api/home/update', {
-                    item: this.editedItem
-                })
-                .then(response => {
-                    if ( response.status == 200 ){
-                        console.log('Success')
-                        this.$nextTick(() => {
-                          this.editedItem = Object.assign({}, this.defaultItem)
-                          this.editedIndex = -1
-                        })
-                        this.initialize()
-                    } 
-                    else 
-                    {
-                        console.log('Failed')
-                    }
-                })
-                .catch(error => {
+                  });
 
-                });
+          } else {
 
-        } else {
+            axios.post('api/home/store', {
+                      item: this.editedItem
+                  })
+                  .then(response => {
+                      if ( response.status == 201 ){
+                          console.log('Success')
+                          this.$nextTick(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem)
+                            this.editedIndex = -1
+                          })
+                          this.initialize()
+                      } 
+                      else 
+                      {
+                          console.log('Failed')
+                      }
+                  })
+                  .catch(error => {
 
-          axios.post('api/home/store', {
-                    item: this.editedItem
-                })
-                .then(response => {
-                    if ( response.status == 201 ){
-                        console.log('Success')
-                        this.$nextTick(() => {
-                          this.editedItem = Object.assign({}, this.defaultItem)
-                          this.editedIndex = -1
-                        })
-                        this.initialize()
-                    } 
-                    else 
-                    {
-                        console.log('Failed')
-                    }
-                })
-                .catch(error => {
-
-                });
-
+                  });
+          }
+          this.close()
         }
-        this.close()
       },
     },
   }
